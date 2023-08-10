@@ -1,0 +1,6 @@
+rootProject.name = 'ChatRoom'
+
+include("Client")
+include("Server")
+include("Share")
+
