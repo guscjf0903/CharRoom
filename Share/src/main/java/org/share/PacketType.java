@@ -12,8 +12,8 @@ public enum PacketType {
     SERVER_MESSAGE(5),
     SERVER_EXCEPTION(6),
     SERVER_DISCONNECT(7),
-    CLIENT_CHANGENAME(8);
-
+    CLIENT_CHANGENAME(8),
+    SERVER_CHANGENAME(9);
 
     private final int value;
 
@@ -27,6 +27,7 @@ public enum PacketType {
             case 6 -> SERVER_EXCEPTION;
             case 7 -> SERVER_DISCONNECT;
             case 8 -> CLIENT_CHANGENAME;
+            case 9 -> SERVER_CHANGENAME;
             default -> null;
         };
     }

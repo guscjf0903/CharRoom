@@ -2,7 +2,6 @@ package org.client;
 
 import org.share.HeaderPacket;
 import org.share.PacketType;
-import org.share.clienttoserver.ClientConnectPacket;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,8 +11,8 @@ import static org.share.HeaderPacket.*;
 import static org.share.servertoclient.ServerDisconnectPacket.*;
 import static org.share.servertoclient.ServerExceptionPacket.*;
 import static org.share.servertoclient.ServerMessagePacket.*;
+import static org.share.servertoclient.ServerNameChangePacket.*;
 import static org.share.servertoclient.ServerNotifyPacket.*;
-import org.client.ClientOutputThread.*;
 
 public class ClientInputThread extends Thread {
     static final int MAXBUFFERSIZE = 1024;
@@ -48,6 +47,9 @@ public class ClientInputThread extends Thread {
                             break;
                         }
                         System.out.println("[SERVER] " + packet.getName() + " left the server.");
+                    } else if(packet.getPacketType() == PacketType.SERVER_CHANGENAME){
+                        System.out.println("[SERVER] " + packet.getName() + "->" + packet.getData());
+                        ClientOutputThread.name = packet.getData();
                     }
                 }
             }
@@ -72,7 +74,9 @@ public class ClientInputThread extends Thread {
             return byteToServerMessagePacket(bytedata);
         } else if (servertype == PacketType.SERVER_DISCONNECT) {
             return byteToServerDisconnectPacket(bytedata);
-        } else return null;
+        } else if(servertype == PacketType.SERVER_CHANGENAME){
+            return byteToServerNameChangePacket(bytedata);
+        }else return null;
     }
 
 

@@ -1,10 +1,7 @@
 package org.server;
 
 import org.share.HeaderPacket;
-import org.share.servertoclient.ServerDisconnectPacket;
-import org.share.servertoclient.ServerExceptionPacket;
-import org.share.servertoclient.ServerMessagePacket;
-import org.share.servertoclient.ServerNotifyPacket;
+import org.share.servertoclient.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -40,10 +37,14 @@ public class SeverMessageHandler {
     }
 
     public static void clientChangeName(HeaderPacket packet) throws IOException {
-        if (Map.Entry<OutputStream,String> entry : clientMap.entrySet()) {
-            clientMap
+        for (Map.Entry<OutputStream,String> entry : clientMap.entrySet()) {
+            String receiverName = entry.getValue();
+            OutputStream clientStream = entry.getKey();
+            if(packet.getName().equals(receiverName)){
+                clientMap.put(clientStream,packet.getData());
+                break;
+            }
         }
-//-------------------------------------------------//
     }
 
 
@@ -96,6 +97,13 @@ public class SeverMessageHandler {
         ServerExceptionPacket exceptionpacket = new ServerExceptionPacket("Duplicate name. Please enter another name");
         byte[] exceptionpacketbyte = packetToByte(exceptionpacket);
         out.write(exceptionpacketbyte);
+        out.flush();
+    }
+
+    public static synchronized void ClientnameChange(OutputStream out,String name,String changename) throws IOException { //한명에게만 서버 공지전송
+        ServerNameChangePacket serverNameChangePacket = new ServerNameChangePacket(name,changename);
+        byte[] namechangePacketbyte = packetToByte(serverNameChangePacket);
+        out.write(namechangePacketbyte);
         out.flush();
     }
 

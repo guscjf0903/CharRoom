@@ -70,10 +70,12 @@ public class ClientOutputThread extends Thread {
             ClientDisconnectPacket clientDisconnectPacket = new ClientDisconnectPacket(name);
             sendPacketToByte(clientDisconnectPacket);
         } else if("/namechange".equals(message)){
-            System.out.println("Please enter a name to change :");
+            System.out.print("Please enter a name to change :");
             String changename = scanner.nextLine();
             ClientChangeNamePacket clientChangeNamePacket = new ClientChangeNamePacket(name,changename);
             sendPacketToByte(clientChangeNamePacket);
+        }else{
+            System.out.println("Invalid command");
         }
     }
 }

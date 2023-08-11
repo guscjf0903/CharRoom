@@ -28,6 +28,7 @@ public abstract class HeaderPacket {
     public String getMessage() {//자식클래스에서 오버라이딩
         return null;
     }
+    public String getData(){ return null; }
 
     public static PacketType byteToPacket(byte[] headerByte) {
         int type = byteArrayToInt(headerByte, 0, 3);

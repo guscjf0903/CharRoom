@@ -16,7 +16,7 @@ public class ClientChangeNamePacket extends HeaderPacket {
     }
 
     public String getName(){return name;}
-    public String getMessage(){return changename;} //ChangeName 오버라이딩 하지않고 Message에 그냥 바뀐 닉네임을 리턴하게 만듬.
+    public String getData(){return changename;} //ChangeName 오버라이딩 하지않고 Message에 그냥 바뀐 닉네임을 리턴하게 만듬.
 
     public byte[] getBodyBytes(){//원래이름길이 + 이름 + 바뀐이름길이 + 바뀐이름 바이트로 변환
         byte[] nameBytes = name.getBytes();

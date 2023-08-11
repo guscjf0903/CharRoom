@@ -55,13 +55,15 @@ public class ServerThread extends Thread {
                     } else if (packet.getPacketType() == PacketType.CLIENT_MESSAGE) {
                         sendAllMessage(packet, clientName);
                     } else if (packet.getPacketType() == CLIENT_CHANGENAME) {
-                        if (clientMap.containsValue(packet.getName())) {
+                        boolean containsValue = clientMap.containsValue(packet.getData());
+                        if (containsValue) {
                             duplicateName(out);
                         }else{
                             clientChangeName(packet);
+                            clientName = packet.getData();
+                            ClientnameChange(out, packet.getName(),packet.getData());
                         }
                     }
-                    //--------------
                     else if (packet.getPacketType() == PacketType.CLIENT_DISCONNECT) {
                         disconnectClient(packet);
                         if (packet.getName().equals(clientName)) {
