@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.util.ConcurrentModificationException;
 import java.util.Map;
 
+import static java.lang.System.out;
 import static org.server.ServerThread.clientMap;
 
 public class SeverMessageHandler {
@@ -28,8 +29,49 @@ public class SeverMessageHandler {
                 } catch (IOException e) {
                     // 클라이언트와의 연결이 끊어진 경우, 해당 클라이언트를 제거합니다.
                     clientMap.remove(receiverName);
-                    System.out.println("[" + receiverName + " Disconnected]");
+                    out.println("[" + receiverName + " Disconnected]");
                 }
+            }
+        } catch (ConcurrentModificationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void sendWhisperMessage(HeaderPacket packet, String sendName) throws IOException {
+        byte[] sendAllbyte = null;
+        ServerMessagePacket serversendpacket = new ServerMessagePacket(packet.getMessage(), sendName);
+        sendAllbyte = packetToByte(serversendpacket);
+        try {
+            for (Map.Entry<OutputStream, String> entry : clientMap.entrySet()) {
+                String receiverName = entry.getValue();
+                OutputStream clientStream = entry.getKey();
+                if (receiverName.equals(packet.getName())) {
+                    try {
+                        clientStream.write(sendAllbyte);
+                        clientStream.flush();
+                    } catch (IOException e) {// 클라이언트와의 연결이 끊어진 경우, 해당 클라이언트를 제거합니다.
+                        clientMap.remove(receiverName);
+                        out.println("[" + receiverName + " Disconnected]");
+                    }
+                    return;
+                }
+            }
+            for (Map.Entry<OutputStream, String> entry : clientMap.entrySet()) { //만약 전송되지 않았을때 예외처리
+                String receiverName = entry.getValue();
+                OutputStream clientStream = entry.getKey();
+                ServerExceptionPacket exceptionpacket = new ServerExceptionPacket("There is no user with that name.");
+                byte[] exceptionpacketbyte = packetToByte(exceptionpacket);
+                if(receiverName.equals(sendName)){
+                    try {
+                        clientStream.write(exceptionpacketbyte);
+                        clientStream.flush();
+                    } catch (IOException e) {// 클라이언트와의 연결이 끊어진 경우, 해당 클라이언트를 제거합니다.
+                        clientMap.remove(receiverName);
+                        out.println("[" + receiverName + " Disconnected]");
+                    }
+                    return;
+                }
+
             }
         } catch (ConcurrentModificationException e) {
             e.printStackTrace();
@@ -62,7 +104,7 @@ public class SeverMessageHandler {
                 } catch (IOException e) {
                     // 클라이언트와의 연결이 끊어진 경우, 해당 클라이언트를 제거합니다.
                     clientMap.remove(receiverName);
-                    System.out.println("[" + receiverName + " Disconnected]");
+                    out.println("[" + receiverName + " Disconnected]");
                 }
             }
         } catch (ConcurrentModificationException e) {
@@ -83,14 +125,14 @@ public class SeverMessageHandler {
                 } catch (IOException e) {
                     // 클라이언트와의 연결이 끊어진 경우, 해당 클라이언트를 제거합니다.
                     clientMap.remove(receiverName);
-                    System.out.println("[" + receiverName + " Disconnected]");
+                    out.println("[" + receiverName + " Disconnected]");
                 }
             }
             clientMap.remove(packet.getName());
         } catch (ConcurrentModificationException e) {
             e.printStackTrace();
         }
-        System.out.println("[" + packet.getName() + " Disconnected]"); //서버에 띄우는 메세지.
+        out.println("[" + packet.getName() + " Disconnected]"); //서버에 띄우는 메세지.
     }
 
     public static synchronized void duplicateName(OutputStream out) throws IOException {

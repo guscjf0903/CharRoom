@@ -1,10 +1,7 @@
 package org.client;
 
 import org.share.*;
-import org.share.clienttoserver.ClientChangeNamePacket;
-import org.share.clienttoserver.ClientConnectPacket;
-import org.share.clienttoserver.ClientDisconnectPacket;
-import org.share.clienttoserver.ClientMessagePacket;
+import org.share.clienttoserver.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -74,7 +71,15 @@ public class ClientOutputThread extends Thread {
             String changename = scanner.nextLine();
             ClientChangeNamePacket clientChangeNamePacket = new ClientChangeNamePacket(name,changename);
             sendPacketToByte(clientChangeNamePacket);
-        }else{
+        } else if("/w".equals(message)){
+            System.out.print("Please enter a name to whisper :");
+            String whispername = scanner.nextLine();
+            System.out.print("Please enter a message to whisper :");
+            String whispermessage = scanner.nextLine();
+            ClientWhisperPacket clientWhisperPacket = new ClientWhisperPacket(whispermessage, whispername);
+            sendPacketToByte(clientWhisperPacket);
+        }
+        else{
             System.out.println("Invalid command");
         }
     }

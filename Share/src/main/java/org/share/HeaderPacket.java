@@ -40,7 +40,7 @@ public abstract class HeaderPacket {
     }
 
 
-    protected static byte[] intToByteArray(int num) {
+    public static byte[] intToByteArray(int num) {
         byte[] byteArray = new byte[4];
         for (int i = 0; i < 4; i++) {
             byteArray[i] = (byte) ((num >> (8 * i)) & 0xFF);

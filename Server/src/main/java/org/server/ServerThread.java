@@ -17,6 +17,7 @@ import static org.share.clienttoserver.ClientChangeNamePacket.*;
 import static org.share.clienttoserver.ClientConnectPacket.*;
 import static org.share.clienttoserver.ClientDisconnectPacket.*;
 import static org.share.clienttoserver.ClientMessagePacket.*;
+import static org.share.clienttoserver.ClientWhisperPacket.*;
 
 public class ServerThread extends Thread {
     static final int MAXBUFFERSIZE = 1024;
@@ -63,8 +64,9 @@ public class ServerThread extends Thread {
                             clientName = packet.getData();
                             ClientnameChange(out, packet.getName(),packet.getData());
                         }
-                    }
-                    else if (packet.getPacketType() == PacketType.CLIENT_DISCONNECT) {
+                    } else if(packet.getPacketType() == CLIENT_WHISPERMESSAGE){
+                        sendWhisperMessage(packet,clientName);
+                    }else if (packet.getPacketType() == PacketType.CLIENT_DISCONNECT) {
                         disconnectClient(packet);
                         if (packet.getName().equals(clientName)) {
                             break;
@@ -104,6 +106,8 @@ public class ServerThread extends Thread {
             return byteToClientDisconnectPacket(bytedata);
         } else if (clienttype == CLIENT_CHANGENAME) {
             return byteToClientChangeNamePacket(bytedata);
+        } else if(clienttype == CLIENT_WHISPERMESSAGE){
+            return byteToClientWhisperPacket(bytedata);
         } else return null;
     }
 

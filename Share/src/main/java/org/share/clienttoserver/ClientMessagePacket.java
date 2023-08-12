@@ -8,6 +8,7 @@ import org.share.PacketType;
 public class ClientMessagePacket extends HeaderPacket {
     private String message;
     private String name;
+    private String whispername;
 
     public ClientMessagePacket(String message, String name) {
         super(PacketType.CLIENT_MESSAGE, 8 + name.getBytes().length + message.getBytes().length);
@@ -22,6 +23,7 @@ public class ClientMessagePacket extends HeaderPacket {
     public String getMessage() {
         return message;
     }
+
 
     public byte[] getBodyBytes() {// 이름길이 + 이름 + 메세지길이 + 메세지를 바이트로 변환
         byte[] nameBytes = name.getBytes();
