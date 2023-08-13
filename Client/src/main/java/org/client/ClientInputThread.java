@@ -10,6 +10,7 @@ import java.net.Socket;
 import static org.share.HeaderPacket.*;
 import static org.share.servertoclient.ServerDisconnectPacket.*;
 import static org.share.servertoclient.ServerExceptionPacket.*;
+import static org.share.servertoclient.ServerFilePacket.*;
 import static org.share.servertoclient.ServerMessagePacket.*;
 import static org.share.servertoclient.ServerNameChangePacket.*;
 import static org.share.servertoclient.ServerNotifyPacket.*;
@@ -50,6 +51,8 @@ public class ClientInputThread extends Thread {
                     } else if(packet.getPacketType() == PacketType.SERVER_CHANGENAME){
                         System.out.println("[SERVER] " + packet.getName() + "->" + packet.getData());
                         ClientOutputThread.name = packet.getData();
+                    } else if(packet.getPacketType() == PacketType.SERVER_FILE){
+                        System.out.println("[SERVER] " + packet.getName() + " send file : " + packet.getFile());
                     }
                 }
             }
@@ -76,7 +79,9 @@ public class ClientInputThread extends Thread {
             return byteToServerDisconnectPacket(bytedata);
         } else if(servertype == PacketType.SERVER_CHANGENAME){
             return byteToServerNameChangePacket(bytedata);
-        }else return null;
+        } else if(servertype == PacketType.SERVER_FILE){
+            return byteToServerFilePacket(bytedata);
+        } else return null;
     }
 
 

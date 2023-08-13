@@ -16,6 +16,7 @@ import static org.share.PacketType.*;
 import static org.share.clienttoserver.ClientChangeNamePacket.*;
 import static org.share.clienttoserver.ClientConnectPacket.*;
 import static org.share.clienttoserver.ClientDisconnectPacket.*;
+import static org.share.clienttoserver.ClientFilePacket.*;
 import static org.share.clienttoserver.ClientMessagePacket.*;
 import static org.share.clienttoserver.ClientWhisperPacket.*;
 
@@ -66,7 +67,11 @@ public class ServerThread extends Thread {
                         }
                     } else if(packet.getPacketType() == CLIENT_WHISPERMESSAGE){
                         sendWhisperMessage(packet,clientName);
-                    }else if (packet.getPacketType() == PacketType.CLIENT_DISCONNECT) {
+                    }else if(packet.getPacketType() == CLIENT_FILE){
+                        File file = packet.getFile();
+                        sendFile(file,clientName);
+                    }
+                    else if (packet.getPacketType() == PacketType.CLIENT_DISCONNECT) {
                         disconnectClient(packet);
                         if (packet.getName().equals(clientName)) {
                             break;
@@ -108,7 +113,10 @@ public class ServerThread extends Thread {
             return byteToClientChangeNamePacket(bytedata);
         } else if(clienttype == CLIENT_WHISPERMESSAGE){
             return byteToClientWhisperPacket(bytedata);
-        } else return null;
+        } else if(clienttype == CLIENT_FILE){
+            return byteToClientFilePacket(bytedata);
+        }
+        else return null;
     }
 
 

@@ -8,7 +8,6 @@ import org.share.PacketType;
 public class ClientMessagePacket extends HeaderPacket {
     private String message;
     private String name;
-    private String whispername;
 
     public ClientMessagePacket(String message, String name) {
         super(PacketType.CLIENT_MESSAGE, 8 + name.getBytes().length + message.getBytes().length);

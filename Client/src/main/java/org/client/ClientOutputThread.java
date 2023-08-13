@@ -3,6 +3,7 @@ package org.client;
 import org.share.*;
 import org.share.clienttoserver.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -62,6 +63,14 @@ public class ClientOutputThread extends Thread {
         out.flush();
     }
 
+    public synchronized void sendFilePacketToByte(ClientFilePacket clientFilePacket){
+        byte[] headerbytedata = clientFilePacket.getHeaderBytes();
+        byte[] bodybytedata = clientFilePacket.getBodyBytes();
+
+
+    }
+
+
     public void ClientCommand(String message) throws IOException {
         if ("/quit".equals(message)) {
             ClientDisconnectPacket clientDisconnectPacket = new ClientDisconnectPacket(name);
@@ -78,8 +87,17 @@ public class ClientOutputThread extends Thread {
             String whispermessage = scanner.nextLine();
             ClientWhisperPacket clientWhisperPacket = new ClientWhisperPacket(whispermessage, whispername);
             sendPacketToByte(clientWhisperPacket);
-        }
-        else{
+        }else if("/f".equals(message)) {
+            System.out.print("Please enter a file name to send : ");
+            String filepath = scanner.nextLine();
+            File file = new File(filepath);
+            if (file.exists()) { // 파일이 존재하는지 확인
+                ClientFilePacket clientFilePacket = new ClientFilePacket(name, file);
+                sendPacketToByte(clientFilePacket);
+            } else { //파일이 없을때 예외처리.
+                System.out.println("File does not exist. Please provide a valid file path.");
+            }
+        } else{
             System.out.println("Invalid command");
         }
     }

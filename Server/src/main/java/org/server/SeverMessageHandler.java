@@ -3,6 +3,7 @@ package org.server;
 import org.share.HeaderPacket;
 import org.share.servertoclient.*;
 
+import java.io.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ConcurrentModificationException;
@@ -12,7 +13,7 @@ import static java.lang.System.out;
 import static org.server.ServerThread.clientMap;
 
 public class SeverMessageHandler {
-    public static void sendAllMessage(HeaderPacket packet,String clientName) throws IOException { //모두에게 전송하는 메세지 (lock 걸어야함)
+    public static void sendAllMessage(HeaderPacket packet,String sendName) throws IOException { //모두에게 전송하는 메세지 (lock 걸어야함)
         byte[] sendAllbyte = null;
         ServerMessagePacket serversendpacket = new ServerMessagePacket(packet.getMessage(), packet.getName());
         sendAllbyte = packetToByte(serversendpacket);
@@ -20,7 +21,7 @@ public class SeverMessageHandler {
             for (Map.Entry<OutputStream, String> entry : clientMap.entrySet()) {
                 String receiverName = entry.getValue();
                 OutputStream clientStream = entry.getKey();
-                if (clientName == receiverName) {
+                if (sendName == receiverName) {
                     continue;
                 }
                 try {
@@ -72,6 +73,31 @@ public class SeverMessageHandler {
                     return;
                 }
 
+            }
+        } catch (ConcurrentModificationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void sendFile(File file , String sendName){
+        byte[] sendAllbyte = null;
+        ServerFilePacket serverFilePacket = new ServerFilePacket(sendName, file);
+        sendAllbyte = packetToByte(serverFilePacket);
+        try {
+            for (Map.Entry<OutputStream, String> entry : clientMap.entrySet()) {
+                String receiverName = entry.getValue();
+                OutputStream clientStream = entry.getKey();
+                if (sendName.equals(receiverName)) {
+                    continue;
+                }
+                try {
+                    clientStream.write(sendAllbyte);
+                    clientStream.flush();
+                } catch (IOException e) {
+                    // 클라이언트와의 연결이 끊어진 경우, 해당 클라이언트를 제거합니다.
+                    clientMap.remove(receiverName);
+                    out.println("[" + receiverName + " Disconnected]");
+                }
             }
         } catch (ConcurrentModificationException e) {
             e.printStackTrace();
