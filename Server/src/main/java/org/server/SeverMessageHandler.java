@@ -79,15 +79,15 @@ public class SeverMessageHandler {
         }
     }
 
-    public static void sendFile(File file , String sendName){
+    public static void sendFile(File file , String fileName,String name){
         byte[] sendAllbyte = null;
-        ServerFilePacket serverFilePacket = new ServerFilePacket(sendName, file);
+        ServerFilePacket serverFilePacket = new ServerFilePacket(fileName, file, name);
         sendAllbyte = packetToByte(serverFilePacket);
         try {
             for (Map.Entry<OutputStream, String> entry : clientMap.entrySet()) {
                 String receiverName = entry.getValue();
                 OutputStream clientStream = entry.getKey();
-                if (sendName.equals(receiverName)) {
+                if (name.equals(receiverName)) {
                     continue;
                 }
                 try {
@@ -103,6 +103,7 @@ public class SeverMessageHandler {
             e.printStackTrace();
         }
     }
+
 
     public static void clientChangeName(HeaderPacket packet) throws IOException {
         for (Map.Entry<OutputStream,String> entry : clientMap.entrySet()) {

@@ -32,6 +32,7 @@ public abstract class HeaderPacket {
     }
     public String getData(){ return null; }
     public File getFile(){ return null; }
+    public String getFileName(){return null; }
 
     public static PacketType byteToPacket(byte[] headerByte) {
         int type = byteArrayToInt(headerByte, 0, 3);
@@ -51,7 +52,7 @@ public abstract class HeaderPacket {
         return byteArray;
     }
 
-    protected static int byteArrayToInt(byte[] byteArray, int startIdx, int endIdx) {
+    public static int byteArrayToInt(byte[] byteArray, int startIdx, int endIdx) {
         int value = 0;
         for (int i = startIdx; i <= endIdx; i++) {
             value += ((int) byteArray[i] & 0xFF) << (8 * (i - startIdx));

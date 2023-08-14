@@ -8,11 +8,11 @@ import java.util.Arrays;
 
 public class newClientFilePacket extends HeaderPacket {
     private File file;
-
-
-    public newClientFilePacket(File file) { //타입 + 파일길이로 헤더 구성
-        super(PacketType.CLIENT_FILE, 4  + (int) file.length());
+    private String name;
+    public newClientFilePacket(File file,String name) { //타입 + 파일길이로 헤더 구성
+        super(PacketType.CLIENT_FILE, 8  + name.getBytes().length + (int) file.length());
         this.file = file;
+        this.name = name;
     }
 
     public File getFile() {

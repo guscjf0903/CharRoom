@@ -1,10 +1,6 @@
 package org.server;
 
 import org.share.*;
-import org.share.servertoclient.ServerDisconnectPacket;
-import org.share.servertoclient.ServerExceptionPacket;
-import org.share.servertoclient.ServerMessagePacket;
-import org.share.servertoclient.ServerNotifyPacket;
 
 import java.io.*;
 import java.net.Socket;
@@ -21,7 +17,7 @@ import static org.share.clienttoserver.ClientMessagePacket.*;
 import static org.share.clienttoserver.ClientWhisperPacket.*;
 
 public class ServerThread extends Thread {
-    static final int MAXBUFFERSIZE = 1024;
+    static final int MAXBUFFERSIZE = 2048;
 
     public static Map<OutputStream, String> clientMap = Collections.synchronizedMap(new HashMap<OutputStream, String>());
     public String clientName;
@@ -67,11 +63,9 @@ public class ServerThread extends Thread {
                         }
                     } else if(packet.getPacketType() == CLIENT_WHISPERMESSAGE){
                         sendWhisperMessage(packet,clientName);
-                    }else if(packet.getPacketType() == CLIENT_FILE){
-                        File file = packet.getFile();
-                        sendFile(file,clientName);
-                    }
-                    else if (packet.getPacketType() == PacketType.CLIENT_DISCONNECT) {
+                    }else if(clientpackettype == CLIENT_FILE){
+                        saveAndSendFile(clientbytedata);
+                    } else if (packet.getPacketType() == PacketType.CLIENT_DISCONNECT) {
                         disconnectClient(packet);
                         if (packet.getName().equals(clientName)) {
                             break;
@@ -80,6 +74,8 @@ public class ServerThread extends Thread {
                 }
             }
         } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("test ");
             System.out.println("[" + clientName + "Disconnected]");
         } finally {
             try {
@@ -114,11 +110,23 @@ public class ServerThread extends Thread {
         } else if(clienttype == CLIENT_WHISPERMESSAGE){
             return byteToClientWhisperPacket(bytedata);
         } else if(clienttype == CLIENT_FILE){
-            return byteToClientFilePacket(bytedata);
-        }
-        else return null;
+            return byteToClientFilePacket(bytedata); //더미//
+        }else return null;
     }
 
+    public void saveAndSendFile(byte[] bodyBytes) throws IOException {
+        int nameLength = byteArrayToInt(bodyBytes, 8, 11);
+        String filename = new String(bodyBytes, 12, nameLength); //인덱스 12부터 nameLength만큼 문자열로 변환
+        int filelength = byteArrayToInt(bodyBytes, 12 + nameLength, 15 + nameLength);
+
+
+        File receivedFile = new File("/Users/hyunchuljung/Desktop/ServerFolder/" + filename);
+        FileOutputStream fos = new FileOutputStream(receivedFile);
+        byte[] fileData = Arrays.copyOfRange(bodyBytes, 16 + nameLength, 16 + nameLength + filelength);
+        fos.write(fileData);
+        fos.close();
+        sendFile(receivedFile,filename,clientName);
+    }
 
 }
 

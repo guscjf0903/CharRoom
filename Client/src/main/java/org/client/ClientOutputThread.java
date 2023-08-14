@@ -92,7 +92,7 @@ public class ClientOutputThread extends Thread {
             String filepath = scanner.nextLine();
             File file = new File(filepath);
             if (file.exists()) { // 파일이 존재하는지 확인
-                ClientFilePacket clientFilePacket = new ClientFilePacket(name, file);
+                ClientFilePacket clientFilePacket = new ClientFilePacket(file.getName(), file);
                 sendPacketToByte(clientFilePacket);
             } else { //파일이 없을때 예외처리.
                 System.out.println("File does not exist. Please provide a valid file path.");
