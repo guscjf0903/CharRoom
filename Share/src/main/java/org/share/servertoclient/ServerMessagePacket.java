@@ -1,24 +1,17 @@
 package org.share.servertoclient;
 
+import lombok.Getter;
 import org.share.HeaderPacket;
 import org.share.PacketType;
-
+@Getter
 public class ServerMessagePacket extends HeaderPacket {
-    private String message;
-    private String name;
+    private final String message;
+    private final String name;
 
     public ServerMessagePacket(String message, String name) { //헤더내용 삽입
         super(PacketType.SERVER_MESSAGE, 8 + name.getBytes().length + message.getBytes().length);
         this.message = message;
         this.name = name;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public byte[] getBodyBytes() {

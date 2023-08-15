@@ -1,5 +1,6 @@
 package org.share.servertoclient;
 
+import lombok.Getter;
 import org.share.HeaderPacket;
 import org.share.PacketType;
 import org.share.clienttoserver.ClientFilePacket;
@@ -8,7 +9,7 @@ import java.io.*;
 import java.util.Arrays;
 
 import static org.share.HeaderPacket.*;
-
+@Getter
 public class ServerFilePacket extends HeaderPacket {
     private String name;
     private File file;

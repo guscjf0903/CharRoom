@@ -6,21 +6,13 @@ import org.share.PacketType;
 
 @Getter
 public class ServerNameChangePacket extends HeaderPacket {
-    private String changename;
-    private String name;
+    private final String changename;
+    private final String name;
 
     public ServerNameChangePacket(String name, String changename) {
         super(PacketType.SERVER_CHANGENAME, 8 + name.getBytes().length + changename.getBytes().length);
         this.name = name;
         this.changename = changename;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getData() {
-        return changename;
     }
 
     public byte[] getBodyBytes() {// 이름길이 + 이름 + 메세지길이 + 메세지를 바이트로 변환

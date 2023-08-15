@@ -6,21 +6,13 @@ import org.share.PacketType;
 
 @Getter
 public class ClientMessagePacket extends HeaderPacket {
-    private String message;
-    private String name;
+    private final String message;
+    private final String name;
 
     public ClientMessagePacket(String message, String name) {
         super(PacketType.CLIENT_MESSAGE, 8 + name.getBytes().length + message.getBytes().length);
         this.message = message;
         this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getMessage() {
-        return message;
     }
 
 

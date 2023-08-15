@@ -1,46 +1,30 @@
 package org.client;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.share.*;
 import org.share.clienttoserver.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
-
+@Getter
+@Setter
 public class ClientOutputThread extends Thread {
     Socket socket;
     OutputStream out = null;
     Scanner scanner = new Scanner(System.in);
-    static String name;
-    ClientConnectPacket connectPacket;
-    public ClientOutputThread(Socket socket,ClientConnectPacket connectPacket) {
+    String name;
+    public ClientOutputThread(Socket socket,String name) {
         this.socket = socket;
-        this.connectPacket = connectPacket;
+        this.name = name;
     }
 
     @Override
     public void run() {
         try {
-            //connectClient();
-            name = connectPacket.getName();
             out = socket.getOutputStream();
-            while (true) { //채팅방 시작.
-                String message;
-                message = scanner.nextLine();
-                if (message != null) {
-                    if(message.charAt(0) == '/'){
-                        ClientCommand(message);
-                    }else{
-                        ClientMessagePacket clientMessagePacket = new ClientMessagePacket(message, name);
-                        sendPacketToByte(clientMessagePacket);
-                    }
-                }
-                if(message == "/quit"){
-                    break;
-                }
-            }
+            startChat(name);
           } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -51,6 +35,30 @@ public class ClientOutputThread extends Thread {
             }
         }
     }
+
+    public void startChat(String name){
+        try{
+            String message;
+            message = scanner.nextLine();
+            while(true){
+                if(message == null){
+                    continue;
+                }
+                if(message.startsWith("/")){
+                    ClientCommand(message);
+                }else{
+                    ClientMessagePacket clientMessagePacket = new ClientMessagePacket(message, name);
+                    sendPacketToByte(clientMessagePacket);
+                }
+                if(message.equals("/quit")){
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     public synchronized void sendPacketToByte(HeaderPacket sendPacket) throws IOException { //원하는 패킷을 주면 바이트로 변환 후 서버에 전송
         byte[] headerbytedata = sendPacket.getHeaderBytes();
@@ -65,9 +73,22 @@ public class ClientOutputThread extends Thread {
 
     public synchronized void sendFilePacketToByte(ClientFilePacket clientFilePacket){
         byte[] headerbytedata = clientFilePacket.getHeaderBytes();
-        byte[] bodybytedata = clientFilePacket.getBodyBytes();
+        try{
+            //헤더 전송
+            out.write(headerbytedata);
+            out.flush();
 
-
+            InputStream fileInputStream = new FileInputStream(clientFilePacket.getFile());
+            byte[] chunk = new byte[1024];
+            int byteRead;
+            while((byteRead = fileInputStream.read(chunk)) != -1){
+                out.write(chunk,0,byteRead);
+                out.flush();
+            }
+            fileInputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -93,7 +114,7 @@ public class ClientOutputThread extends Thread {
             File file = new File(filepath);
             if (file.exists()) { // 파일이 존재하는지 확인
                 ClientFilePacket clientFilePacket = new ClientFilePacket(file.getName(), file);
-                sendPacketToByte(clientFilePacket);
+                sendFilePacketToByte(clientFilePacket);
             } else { //파일이 없을때 예외처리.
                 System.out.println("File does not exist. Please provide a valid file path.");
             }

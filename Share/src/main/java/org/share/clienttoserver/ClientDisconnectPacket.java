@@ -6,15 +6,11 @@ import org.share.PacketType;
 
 @Getter
 public class ClientDisconnectPacket extends HeaderPacket {
-    private String name;
+    private final String name;
 
     public ClientDisconnectPacket(String name) { //디스커넥트는 message가 필요없음
         super(PacketType.CLIENT_DISCONNECT, 4 + name.getBytes().length);
         this.name = name;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public byte[] getBodyBytes() { //이름길이 + 이름을 바이트로 변환

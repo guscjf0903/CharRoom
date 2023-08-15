@@ -6,18 +6,14 @@ import org.share.PacketType;
 
 @Getter
 public class ClientChangeNamePacket extends HeaderPacket {
-    private String name;
-    private String changename;
+    private final String name;
+    private final String changename;
 
     public ClientChangeNamePacket(String name, String changename){
         super(PacketType.CLIENT_CHANGENAME, 8 + name.getBytes().length + changename.getBytes().length);
         this.name = name;
         this.changename = changename;
     }
-
-    public String getName(){return name;}
-    public String getData(){return changename;} //ChangeName 오버라이딩 하지않고 Message에 그냥 바뀐 닉네임을 리턴하게 만듬.
-
     public byte[] getBodyBytes(){//원래이름길이 + 이름 + 바뀐이름길이 + 바뀐이름 바이트로 변환
         byte[] nameBytes = name.getBytes();
         byte[] changenameBytes = changename.getBytes();

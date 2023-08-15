@@ -1,18 +1,15 @@
 package org.share.servertoclient;
 
+import lombok.Getter;
 import org.share.HeaderPacket;
 import org.share.PacketType;
-
+@Getter
 public class ServerDisconnectPacket extends HeaderPacket {
-    private String name;
+    private final String name;
 
     public ServerDisconnectPacket(String name) { //헤더내용 삽입
         super(PacketType.SERVER_DISCONNECT, 4 + name.getBytes().length);
         this.name = name;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public byte[] getBodyBytes() {

@@ -3,8 +3,6 @@ package org.share;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.io.*;
-
 import static org.share.PacketType.*;
 
 @AllArgsConstructor
@@ -23,18 +21,7 @@ public abstract class HeaderPacket {
 
     abstract public byte[] getBodyBytes();
 
-    public String getName() { //자식클래스에서 오버라이딩
-        return null;
-    }
-
-    public String getMessage() {//자식클래스에서 오버라이딩
-        return null;
-    }
-    public String getData(){ return null; }
-    public File getFile(){ return null; }
-    public String getFileName(){return null; }
-
-    public static PacketType byteToPacket(byte[] headerByte) {
+    public static PacketType byteToPackettype(byte[] headerByte) {
         int type = byteArrayToInt(headerByte, 0, 3);
         return clientFindByValue(type);
     }
