@@ -14,17 +14,18 @@ public class ClientOutputThread extends Thread {
     Socket socket;
     OutputStream out = null;
     Scanner scanner = new Scanner(System.in);
-    String name;
-    public ClientOutputThread(Socket socket,String name) {
+    String clientname;
+    public ClientOutputThread(Socket socket,String clientname) {
         this.socket = socket;
-        this.name = name;
+        this.clientname = clientname;
     }
+
 
     @Override
     public void run() {
         try {
             out = socket.getOutputStream();
-            startChat(name);
+            startChat();
           } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -36,18 +37,18 @@ public class ClientOutputThread extends Thread {
         }
     }
 
-    public void startChat(String name){
+    public void startChat(){
         try{
-            String message;
-            message = scanner.nextLine();
             while(true){
+                String message;
+                message = scanner.nextLine();
                 if(message == null){
                     continue;
                 }
                 if(message.startsWith("/")){
                     ClientCommand(message);
                 }else{
-                    ClientMessagePacket clientMessagePacket = new ClientMessagePacket(message, name);
+                    ClientMessagePacket clientMessagePacket = new ClientMessagePacket(message, clientname);
                     sendPacketToByte(clientMessagePacket);
                 }
                 if(message.equals("/quit")){
@@ -71,7 +72,7 @@ public class ClientOutputThread extends Thread {
         out.flush();
     }
 
-    public synchronized void sendFilePacketToByte(ClientFilePacket clientFilePacket){
+    public synchronized void sendFilePacketToByte(File file){
         byte[] headerbytedata = clientFilePacket.getHeaderBytes();
         try{
             //헤더 전송
@@ -94,12 +95,12 @@ public class ClientOutputThread extends Thread {
 
     public void ClientCommand(String message) throws IOException {
         if ("/quit".equals(message)) {
-            ClientDisconnectPacket clientDisconnectPacket = new ClientDisconnectPacket(name);
+            ClientDisconnectPacket clientDisconnectPacket = new ClientDisconnectPacket(clientname);
             sendPacketToByte(clientDisconnectPacket);
         } else if("/namechange".equals(message)){
             System.out.print("Please enter a name to change :");
             String changename = scanner.nextLine();
-            ClientChangeNamePacket clientChangeNamePacket = new ClientChangeNamePacket(name,changename);
+            ClientChangeNamePacket clientChangeNamePacket = new ClientChangeNamePacket(clientname,changename);
             sendPacketToByte(clientChangeNamePacket);
         } else if("/w".equals(message)){
             System.out.print("Please enter a name to whisper :");
@@ -113,8 +114,7 @@ public class ClientOutputThread extends Thread {
             String filepath = scanner.nextLine();
             File file = new File(filepath);
             if (file.exists()) { // 파일이 존재하는지 확인
-                ClientFilePacket clientFilePacket = new ClientFilePacket(file.getName(), file);
-                sendFilePacketToByte(clientFilePacket);
+                sendFilePacketToByte(file);
             } else { //파일이 없을때 예외처리.
                 System.out.println("File does not exist. Please provide a valid file path.");
             }

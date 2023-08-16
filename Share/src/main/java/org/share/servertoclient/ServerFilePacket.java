@@ -35,6 +35,8 @@ public class ServerFilePacket extends HeaderPacket {
         return filename;
     }
 
+
+
     public byte[] getBodyBytes() {// 이름길이 + 이름 + 메세지길이 + 메세지를 바이트로 변환
         byte[] nameBytes = name.getBytes();
         byte[] fileBytes = readFileBytes(file);

@@ -104,14 +104,28 @@ public class SeverMessageHandler {
 
 
     public static void clientChangeName(ClientChangeNamePacket clientChangeNamePacket) throws IOException {
+        ServerNameChangePacket serverNameChangePacket = new ServerNameChangePacket(clientChangeNamePacket.getName(),clientChangeNamePacket.getChangename());
+        byte[] serverNameChangePacketbyte = packetToByte(serverNameChangePacket);
         for (Map.Entry<OutputStream,String> entry : clientMap.entrySet()) {
             String receiverName = entry.getValue();
             OutputStream clientStream = entry.getKey();
+            try {
+                clientStream.write(serverNameChangePacketbyte);
+                clientStream.flush();
+            } catch (IOException e) {
+                // 클라이언트와의 연결이 끊어진 경우, 해당 클라이언트를 제거합니다.
+                clientMap.remove(clientStream);
+                out.println("[" + receiverName + " Disconnected]");
+            }
             if(clientChangeNamePacket.getName().equals(receiverName)){
                 clientMap.put(clientStream,clientChangeNamePacket.getChangename());
-                break;
             }
         }
+
+
+
+
+
     }
 //패킷을 받아서 해쉬맵안에 같은 이름을 가진 밸류를 찾아서 바꾼 이름으로 바꿔줌
 
@@ -140,6 +154,7 @@ public class SeverMessageHandler {
     public static synchronized void disconnectClient(ClientDisconnectPacket disconnectPacket) throws IOException {
         ServerDisconnectPacket disconnectpacket = new ServerDisconnectPacket(disconnectPacket.getName());
         byte[] disconnectpacketbyte = packetToByte(disconnectpacket);
+
         try {
             for (Map.Entry<OutputStream, String> entry : clientMap.entrySet()) {
                 String receiverName = entry.getValue();
@@ -149,8 +164,8 @@ public class SeverMessageHandler {
                     clientStream.flush();
                 } catch (IOException e) {
                     // 클라이언트와의 연결이 끊어진 경우, 해당 클라이언트를 제거합니다.
-                    clientMap.remove(clientStream);
-                    out.println("[" + receiverName + " Disconnected]");
+                    //clientMap.remove(clientStream);
+                    out.println("[" + receiverName + "Disconnected]");
                 }
             }
         } catch (ConcurrentModificationException e) {

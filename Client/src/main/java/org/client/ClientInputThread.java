@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.util.Arrays;
-import org.client.ClientOutputThread;
 import org.share.servertoclient.*;
 
 import static org.share.HeaderPacket.*;
@@ -40,11 +39,13 @@ public class ClientInputThread extends Thread {
                 int serverbytelength = in.read(serverbytedata);
                 PacketType serverpackettype = byteToPackettype(serverbytedata);//서버 헤더부분 타입추출
                 int serverpacketlength = byteToBodyLength(serverbytedata); //서버 헤더부분 길이추출
-                boolean disconnectcheck = true;
+                boolean disconnectcheck;
                 if (serverbytelength >= 0) {
                     HeaderPacket packet = makeServerPacket(serverbytedata, serverpackettype);
                     disconnectcheck = packetCastingAndPrint(packet, serverpackettype);
-
+                    if(!disconnectcheck){
+                        break;
+                    }
                 }
             }
         } catch (IOException e) {
@@ -75,14 +76,16 @@ public class ClientInputThread extends Thread {
             return true;
         } else if (packetType == PacketType.SERVER_DISCONNECT) {
             ServerDisconnectPacket disconnectPacket = (ServerDisconnectPacket) packet;
-            if (disconnectPacket.getName().equals(clientOutputThread.getName())) { //본인이 나가기 된 경우.
+            if (disconnectPacket.getName().equals(clientOutputThread.getClientname())) { //본인이 나가기 된 경우.
                 return false;
             }
             System.out.println("[SERVER] " + disconnectPacket.getName() + " left the server.");
         } else if(packetType == PacketType.SERVER_CHANGENAME){
             ServerNameChangePacket nameChangePacket = (ServerNameChangePacket) packet;
             System.out.println("[SERVER] " + nameChangePacket.getName() + "->" + nameChangePacket.getChangename());
-            clientOutputThread.setName(nameChangePacket.getChangename());
+            if(clientOutputThread.getClientname().equals(nameChangePacket.getName())){
+                clientOutputThread.setClientname(nameChangePacket.getChangename());
+            }
             return true;
         }
         //파일은 미구현

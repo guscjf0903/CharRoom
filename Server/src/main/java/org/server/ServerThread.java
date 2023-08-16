@@ -100,11 +100,9 @@ public class ServerThread extends Thread {
             if (clientpackettype == PacketType.CLIENT_CONNECT) {
                 ClientConnectPacket connectPacket = (ClientConnectPacket) packet;
                 connectClient(connectPacket);
-                return true;
             } else if (clientpackettype == PacketType.CLIENT_MESSAGE) {
                 ClientMessagePacket messagePacket = (ClientMessagePacket) packet;
                 sendAllMessage(messagePacket);
-                return true;
             } else if (clientpackettype == CLIENT_CHANGENAME) {
                 ClientChangeNamePacket changeNamePacket = (ClientChangeNamePacket) packet;
                 boolean containsValue = clientMap.containsValue(changeNamePacket.getChangename());
@@ -115,11 +113,9 @@ public class ServerThread extends Thread {
                     clientName = changeNamePacket.getChangename();
                     exceptionMessage(out, "Your name has been changed to " + changeNamePacket.getChangename());
                 }
-                return true;
             } else if (clientpackettype == CLIENT_WHISPERMESSAGE) {
                 ClientWhisperPacket whisperPacket = (ClientWhisperPacket) packet;
                 sendWhisperMessage(whisperPacket, clientName);
-                return true;
             }// --- 파일은 미구현//
             else if (clientpackettype == CLIENT_FILE) {
 //                saveAndSendFile(clientbytedata);
