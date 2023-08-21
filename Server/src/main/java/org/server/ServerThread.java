@@ -79,7 +79,7 @@ public class ServerThread extends Thread {
         System.out.println("[" + clientName + " Connected]"); //서버에 띄우는 메세지.
     }
 
-    private HeaderPacket makeClientPacket(byte[] bytedata, PacketType clienttype) {
+    private HeaderPacket makeClientPacket(byte[] bytedata, PacketType clienttype) throws IOException {
         if (clienttype == CLIENT_MESSAGE) {
             return byteToClientMessagePacket(bytedata);
         } else if (clienttype == CLIENT_CONNECT) {
@@ -91,11 +91,11 @@ public class ServerThread extends Thread {
         } else if (clienttype == CLIENT_WHISPERMESSAGE) {
             return byteToClientWhisperPacket(bytedata);
         } else if (clienttype == CLIENT_FILE) {
-            return byteToClientFilePacket(bytedata); //더미//
+            return byteToClientFilePacket(bytedata);
         } else return null;
     }
 
-    public boolean packetCastingAndSend(HeaderPacket packet, PacketType clientpackettype) throws IOException {
+    public synchronized boolean packetCastingAndSend(HeaderPacket packet, PacketType clientpackettype) throws IOException {
         if (packet != null) {
             if (clientpackettype == PacketType.CLIENT_CONNECT) {
                 ClientConnectPacket connectPacket = (ClientConnectPacket) packet;
@@ -116,11 +116,13 @@ public class ServerThread extends Thread {
             } else if (clientpackettype == CLIENT_WHISPERMESSAGE) {
                 ClientWhisperPacket whisperPacket = (ClientWhisperPacket) packet;
                 sendWhisperMessage(whisperPacket, clientName);
-            }// --- 파일은 미구현//
+            }
             else if (clientpackettype == CLIENT_FILE) {
-//                saveAndSendFile(clientbytedata);
+                ClientFilePacket filePacket = (ClientFilePacket) packet;
+                System.out.println("packetCasting chunk :" + filePacket.getChunk().length);
+                saveAndSendFile(filePacket);
                 return true;
-            } // --- 파일은 미구현//
+            }
             else if (clientpackettype == PacketType.CLIENT_DISCONNECT) {
                 ClientDisconnectPacket disconnectPacket = (ClientDisconnectPacket) packet;
                 disconnectClient(disconnectPacket);
@@ -132,32 +134,6 @@ public class ServerThread extends Thread {
         }
         return true;
     }
-
-
-    public void saveAndSendFile(byte[] bodyBytes) throws IOException {
-        int nameLength = byteArrayToInt(bodyBytes, 8, 11);
-        String filename = new String(bodyBytes, 12, nameLength); //인덱스 12부터 nameLength만큼 문자열로 변환
-        int filelength = byteArrayToInt(bodyBytes, 12 + nameLength, 15 + nameLength);
-
-
-        File receivedFile = new File("/Users/hyunchuljung/Desktop/ServerFolder" + filename);
-        FileOutputStream fos = new FileOutputStream(receivedFile);
-        fos.getChannel().position(0);
-        byte[] fileData = Arrays.copyOfRange(bodyBytes, 16 + nameLength, 16 + nameLength + filelength);
-        fos.write(fileData);
-        fos.close();
-        ServerFilePacket serverFilePacket = new ServerFilePacket(filename, receivedFile, clientName);
-
-        for (Map.Entry<OutputStream, String> entry : clientMap.entrySet()) {
-            String receiverName = entry.getValue();
-            OutputStream clientStream = entry.getKey();
-            if (receiverName.equals(clientName)) {
-                continue;
-            }
-            sendFileInChunks(serverFilePacket, clientStream);
-        }
-    }
-
 }
 
 

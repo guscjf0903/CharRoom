@@ -8,6 +8,9 @@ import org.share.clienttoserver.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
+
+import static org.share.HeaderPacket.intToByteArray;
+
 @Getter
 @Setter
 public class ClientOutputThread extends Thread {
@@ -72,28 +75,32 @@ public class ClientOutputThread extends Thread {
         out.flush();
     }
 
-    public synchronized void sendFilePacketToByte(File file){
-        byte[] headerbytedata = clientFilePacket.getHeaderBytes();
+    public synchronized void sendFilePacketToByte(File file) {
         try{
-            //헤더 전송
-            out.write(headerbytedata);
-            out.flush();
-
-            InputStream fileInputStream = new FileInputStream(clientFilePacket.getFile());
-            byte[] chunk = new byte[1024];
+            InputStream fileInputStream = new FileInputStream(file); // 파일로만 구성된 데이터에서 이름을 계속추가
+            byte[] chunk = new byte[4096];
             int byteRead;
+            int chunknumber = 0;
+
             while((byteRead = fileInputStream.read(chunk)) != -1){
-                out.write(chunk,0,byteRead);
-                out.flush();
+                byte[] actualChunk = new byte[byteRead];
+                System.arraycopy(chunk, 0, actualChunk, 0, byteRead);
+                System.out.println("actual Chunk : " + actualChunk.length);
+                ClientFilePacket clientFilePacket = new ClientFilePacket(file.getName(),chunknumber,actualChunk);
+                sendPacketToByte(clientFilePacket);
+                chunknumber++;
+                this.sleep(10);
             }
             fileInputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
 
-    public void ClientCommand(String message) throws IOException {
+    public synchronized void ClientCommand(String message) throws IOException {
         if ("/quit".equals(message)) {
             ClientDisconnectPacket clientDisconnectPacket = new ClientDisconnectPacket(clientname);
             sendPacketToByte(clientDisconnectPacket);

@@ -108,8 +108,7 @@ public class ClientInputThread extends Thread {
             return byteToServerDisconnectPacket(bytedata);
         } else if(servertype == PacketType.SERVER_CHANGENAME){
             return byteToServerNameChangePacket(bytedata);
-        }
-        else return null;
+        } else return null;
     }
 
     public void saveFile(byte[] bodyBytes) throws IOException {

@@ -1,51 +1,47 @@
 package org.share.clienttoserver;
 
+import lombok.Getter;
 import org.share.HeaderPacket;
 import org.share.PacketType;
 
 import java.io.*;
 import java.util.*;
-
+@Getter
 public class ClientFilePacket extends HeaderPacket {
-    private String filename;
+    private final String filename;
     private File file;
+    byte[] chunk;
+    int chunknumber;
 
-
-    public ClientFilePacket(String filename, File file) {
-        super(PacketType.CLIENT_FILE, 8 + filename.getBytes().length + (int) file.length());
+    public ClientFilePacket(String filename, int chunknumber,byte[] chunk) throws IOException {
+        super(PacketType.CLIENT_FILE, 12 + filename.getBytes().length + chunk.length);
         this.filename = filename;
-        this.file = file;
+        this.chunknumber = chunknumber;
+        this.chunk = chunk;
     }
 
-    public String getName() {
-        return filename;
-    }
 
-    public File getFile() {
-        return file;
-    }
-
-    public byte[] getBodyBytes() {// 이름길이 + 이름 + 메세지길이 + 메세지를 바이트로 변환
-        byte[] filenameBytes = filename.getBytes();
-        byte[] fileBytes = readFileBytes(file);
+    public byte[] getBodyBytes(){// 파일이름길이 + 파일이름 + 청크넘버 + 청크를 바이트로 변환
+        byte[] filenamebyte = this.filename.getBytes();
         byte[] bodyBytes = new byte[bodyLength];
-        System.arraycopy(intToByteArray(filenameBytes.length), 0, bodyBytes, 0, 4);
-        System.arraycopy(filenameBytes, 0, bodyBytes, 4, filenameBytes.length);
-        System.arraycopy(intToByteArray(fileBytes.length), 0, bodyBytes, 4 + filenameBytes.length, 4);
-        System.arraycopy(fileBytes, 0, bodyBytes, 8 + filenameBytes.length, fileBytes.length);
+        System.arraycopy(intToByteArray(filenamebyte.length), 0, bodyBytes, 0, 4);
+        System.arraycopy(filenamebyte, 0, bodyBytes, 4, filenamebyte.length);
+        System.arraycopy(intToByteArray(chunknumber), 0, bodyBytes, 4 + filenamebyte.length, 4);
+        System.arraycopy(intToByteArray(chunk.length), 0, bodyBytes, 8 + filenamebyte.length, 4);
+        System.arraycopy(chunk, 0, bodyBytes, 12 + filenamebyte.length, chunk.length);
+
         return bodyBytes;
     }
 
-    public static ClientFilePacket byteToClientFilePacket(byte[] bodyBytes) { //바이트를 파일로 변환
-        int nameLength = byteArrayToInt(bodyBytes, 8, 11);
-        String name = new String(bodyBytes, 12, nameLength); //인덱스 12부터 nameLength만큼 문자열로 변환
 
-        int filelength = byteArrayToInt(bodyBytes, 12 + nameLength, 15 + nameLength);
-        byte[] fileData = Arrays.copyOfRange(bodyBytes, 16 + nameLength, 16 + nameLength + filelength);
+    public static ClientFilePacket byteToClientFilePacket(byte[] bodyBytes) throws IOException { //바이트를 파일로 변환
+        int filenamelength = byteArrayToInt(bodyBytes, 8, 11);
+        String filename = new String(bodyBytes, 12, filenamelength);
+        int chunknumber = byteArrayToInt(bodyBytes, 12 + filenamelength, 15 + filenamelength);
+        int chunklength = byteArrayToInt(bodyBytes, 16 + filenamelength, 19 + filenamelength);
+        byte[] chunk = Arrays.copyOfRange(bodyBytes, 20 + filenamelength, 20 + filenamelength + chunklength);
 
-        File tempFile = createTempFileFromByteArray(fileData);
-
-        return new ClientFilePacket(name, tempFile);
+        return new ClientFilePacket(filename, chunknumber,chunk);
     }
 
 
@@ -61,25 +57,4 @@ public class ClientFilePacket extends HeaderPacket {
             return null;
         }
     }
-
-    public static byte[] readFileBytes(File file){  //file을 바이트로 바꿔줌
-        try {
-            FileInputStream inputStream = new FileInputStream(file);
-            ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-            byte[] buffer = new byte[2048];
-            int bytesRead;
-
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                byteOutput.write(buffer, 0, bytesRead);
-            }
-
-            inputStream.close();
-            return byteOutput.toByteArray();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-
 }

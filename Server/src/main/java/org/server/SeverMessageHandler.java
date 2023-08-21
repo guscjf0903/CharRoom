@@ -1,22 +1,22 @@
 package org.server;
 
 import org.share.HeaderPacket;
-import org.share.clienttoserver.ClientChangeNamePacket;
-import org.share.clienttoserver.ClientDisconnectPacket;
-import org.share.clienttoserver.ClientMessagePacket;
-import org.share.clienttoserver.ClientWhisperPacket;
+import org.share.clienttoserver.*;
 import org.share.servertoclient.*;
 
 import java.io.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ConcurrentModificationException;
+import java.util.HashMap;
 import java.util.Map;
 
 import static java.lang.System.out;
 import static org.server.ServerThread.clientMap;
 
 public class SeverMessageHandler {
+    static Map<String, RandomAccessFile> fileMap = new HashMap<>();
+
     public static void sendAllMessage(ClientMessagePacket messagepacket) throws IOException { //모두에게 전송하는 메세지 (lock 걸어야함)
         byte[] sendAllbyte = null;
         ServerMessagePacket serversendpacket = new ServerMessagePacket(messagepacket.getMessage(), messagepacket.getName());
@@ -179,6 +179,28 @@ public class SeverMessageHandler {
         byte[] exceptionpacketbyte = packetToByte(exceptionpacket);
         out.write(exceptionpacketbyte);
         out.flush();
+    }
+
+    public static synchronized void saveAndSendFile(ClientFilePacket Packet) throws IOException {
+        try{
+
+            String filename = Packet.getFilename();
+            int chunknumber = Packet.getChunknumber();
+            byte[] chunk = Packet.getChunk();
+            System.out.println("saveAndSend chunk :" + chunk.length);
+            System.out.println("chunk num:" + chunknumber);
+
+            if(!fileMap.containsKey(filename)){
+                File file = new File("/Users/hyunchuljung/Desktop/ServerFolder/" + filename);
+                RandomAccessFile rfile = new RandomAccessFile(file,"rw");
+                fileMap.put(filename,rfile);
+            }
+                RandomAccessFile rfile = fileMap.get(filename);
+                rfile.seek(chunknumber * 4096L);
+                rfile.write(chunk);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private static byte[] packetToByte(HeaderPacket sendpacket){ //헤더와 바디를 합쳐서 하나의 바이트배열로 반환

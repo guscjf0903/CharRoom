@@ -24,7 +24,7 @@ public class Client {
         try {
             //socket 연결 후 클라이언트 인풋,아웃풋 생성
             socket = new Socket("localhost", SERVER_PORT);
-
+            socket.setTcpNoDelay(true);
             String connectname = duplicateNameCheck(socket);
 
             ClientOutputThread clientoutputThread = new ClientOutputThread(socket,connectname);
