@@ -2,7 +2,6 @@ package org.server;
 
 import org.share.*;
 import org.share.clienttoserver.*;
-import org.share.servertoclient.ServerFilePacket;
 
 import java.io.*;
 import java.net.Socket;
@@ -19,7 +18,7 @@ import static org.share.clienttoserver.ClientMessagePacket.*;
 import static org.share.clienttoserver.ClientWhisperPacket.*;
 
 public class ServerThread extends Thread {
-    static final int MAXBUFFERSIZE = 2048;
+    static final int MAXBUFFERSIZE = 5000;
 
     public static Map<OutputStream, String> clientMap = Collections.synchronizedMap(new HashMap<OutputStream, String>());
     public String clientName;
@@ -120,7 +119,7 @@ public class ServerThread extends Thread {
             else if (clientpackettype == CLIENT_FILE) {
                 ClientFilePacket filePacket = (ClientFilePacket) packet;
                 System.out.println("packetCasting chunk :" + filePacket.getChunk().length);
-                saveAndSendFile(filePacket);
+                sendFile(filePacket, clientName);
                 return true;
             }
             else if (clientpackettype == PacketType.CLIENT_DISCONNECT) {

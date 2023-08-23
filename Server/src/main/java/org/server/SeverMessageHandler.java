@@ -80,7 +80,7 @@ public class SeverMessageHandler {
         }
     }
 
-    public static void sendFileInChunks(ServerFilePacket serverFilePacket, OutputStream out){
+    /*public static void sendFileInChunks(ServerFilePacket serverFilePacket, OutputStream out){
         byte[] headerbytedata = serverFilePacket.getHeaderBytes();
         byte[] bodybytedata = serverFilePacket.getBodyBytes();
 
@@ -100,7 +100,7 @@ public class SeverMessageHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
 
     public static void clientChangeName(ClientChangeNamePacket clientChangeNamePacket) throws IOException {
@@ -181,24 +181,27 @@ public class SeverMessageHandler {
         out.flush();
     }
 
-    public static synchronized void saveAndSendFile(ClientFilePacket Packet) throws IOException {
-        try{
-
-            String filename = Packet.getFilename();
-            int chunknumber = Packet.getChunknumber();
-            byte[] chunk = Packet.getChunk();
-            System.out.println("saveAndSend chunk :" + chunk.length);
-            System.out.println("chunk num:" + chunknumber);
-
-            if(!fileMap.containsKey(filename)){
-                File file = new File("/Users/hyunchuljung/Desktop/ServerFolder/" + filename);
-                RandomAccessFile rfile = new RandomAccessFile(file,"rw");
-                fileMap.put(filename,rfile);
+    public static synchronized void sendFile(ClientFilePacket Packet, String clientName) throws IOException {
+        byte[] sendAllbyte;
+        ServerFilePacket serverFilePacket = new ServerFilePacket(clientName,Packet.getFilename(),Packet.getChunknumber(),Packet.getChunk(), Packet.getLastChunknumber());
+        sendAllbyte = packetToByte(serverFilePacket);
+        try {
+            for (Map.Entry<OutputStream, String> entry : clientMap.entrySet()) {
+                String receiverName = entry.getValue();
+                OutputStream clientStream = entry.getKey();
+                if (clientName.equals(receiverName)) {
+                    continue;
+                }
+                try {
+                    clientStream.write(sendAllbyte);
+                    clientStream.flush();
+                } catch (IOException e) {
+                    // 클라이언트와의 연결이 끊어진 경우, 해당 클라이언트를 제거합니다.
+                    clientMap.remove(clientStream);
+                    out.println("[" + receiverName + " Disconnected]");
+                }
             }
-                RandomAccessFile rfile = fileMap.get(filename);
-                rfile.seek(chunknumber * 4096L);
-                rfile.write(chunk);
-        } catch (IOException e) {
+        } catch (ConcurrentModificationException e) {
             e.printStackTrace();
         }
     }

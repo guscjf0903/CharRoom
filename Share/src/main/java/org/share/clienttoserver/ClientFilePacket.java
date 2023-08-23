@@ -12,12 +12,14 @@ public class ClientFilePacket extends HeaderPacket {
     private File file;
     byte[] chunk;
     int chunknumber;
+    int lastChunknumber;
 
-    public ClientFilePacket(String filename, int chunknumber,byte[] chunk) throws IOException {
-        super(PacketType.CLIENT_FILE, 12 + filename.getBytes().length + chunk.length);
+    public ClientFilePacket(String filename, int chunknumber,byte[] chunk, int lastChunknumber) throws IOException {
+        super(PacketType.CLIENT_FILE, 16 + filename.getBytes().length + chunk.length);
         this.filename = filename;
         this.chunknumber = chunknumber;
         this.chunk = chunk;
+        this.lastChunknumber = lastChunknumber;
     }
 
 
@@ -29,6 +31,7 @@ public class ClientFilePacket extends HeaderPacket {
         System.arraycopy(intToByteArray(chunknumber), 0, bodyBytes, 4 + filenamebyte.length, 4);
         System.arraycopy(intToByteArray(chunk.length), 0, bodyBytes, 8 + filenamebyte.length, 4);
         System.arraycopy(chunk, 0, bodyBytes, 12 + filenamebyte.length, chunk.length);
+        System.arraycopy(intToByteArray(lastChunknumber), 0, bodyBytes, 12 + filenamebyte.length + chunk.length, 4);
 
         return bodyBytes;
     }
@@ -40,21 +43,8 @@ public class ClientFilePacket extends HeaderPacket {
         int chunknumber = byteArrayToInt(bodyBytes, 12 + filenamelength, 15 + filenamelength);
         int chunklength = byteArrayToInt(bodyBytes, 16 + filenamelength, 19 + filenamelength);
         byte[] chunk = Arrays.copyOfRange(bodyBytes, 20 + filenamelength, 20 + filenamelength + chunklength);
-
-        return new ClientFilePacket(filename, chunknumber,chunk);
+        int lastChunknumber = byteArrayToInt(bodyBytes, 20 + filenamelength + chunklength, 23 + filenamelength + chunklength);
+        return new ClientFilePacket(filename, chunknumber,chunk, lastChunknumber);
     }
 
-
-    private static File createTempFileFromByteArray(byte[] fileData) { //파일을 재조합해서 다시 패킷을 만들어줄때 쓰는 메서드
-        try {
-            File tempFile = File.createTempFile("received", ".tmp"); // 임시 파일 생성
-            try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile)) {
-                fileOutputStream.write(fileData); // 바이트 데이터를 파일에 쓰기
-            }
-            return tempFile;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 }

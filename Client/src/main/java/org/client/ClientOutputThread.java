@@ -81,12 +81,13 @@ public class ClientOutputThread extends Thread {
             byte[] chunk = new byte[4096];
             int byteRead;
             int chunknumber = 0;
+            int lastChunknumber = (int) Math.ceil((double) file.length() / 4096) - 1;
 
             while((byteRead = fileInputStream.read(chunk)) != -1){
                 byte[] actualChunk = new byte[byteRead];
                 System.arraycopy(chunk, 0, actualChunk, 0, byteRead);
                 System.out.println("actual Chunk : " + actualChunk.length);
-                ClientFilePacket clientFilePacket = new ClientFilePacket(file.getName(),chunknumber,actualChunk);
+                ClientFilePacket clientFilePacket = new ClientFilePacket(file.getName(),chunknumber,actualChunk,lastChunknumber);
                 sendPacketToByte(clientFilePacket);
                 chunknumber++;
                 this.sleep(10);

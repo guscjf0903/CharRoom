@@ -3,26 +3,27 @@ package org.client;
 import org.share.HeaderPacket;
 import org.share.PacketType;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.HashMap;
+
 import org.share.servertoclient.*;
 
 import static org.share.HeaderPacket.*;
 import static org.share.servertoclient.ServerDisconnectPacket.*;
 import static org.share.servertoclient.ServerExceptionPacket.*;
+import static org.share.servertoclient.ServerFilePacket.*;
 import static org.share.servertoclient.ServerMessagePacket.*;
 import static org.share.servertoclient.ServerNameChangePacket.*;
 import static org.share.servertoclient.ServerNotifyPacket.*;
 
 public class ClientInputThread extends Thread {
-    static final int MAXBUFFERSIZE = 2048;
+    static final int MAXBUFFERSIZE = 5000;
     Socket socket;
     InputStream in = null;
     ClientOutputThread clientOutputThread;
+    HashMap<String, RandomAccessFile> fileMap = new HashMap<>();
 
     public ClientInputThread(Socket socket, ClientOutputThread clientOutputThread) {
         this.socket = socket;
@@ -61,7 +62,7 @@ public class ClientInputThread extends Thread {
         }
     }
 
-    public boolean packetCastingAndPrint(HeaderPacket packet, PacketType packetType){
+    public boolean packetCastingAndPrint(HeaderPacket packet, PacketType packetType) throws IOException {
         if (packetType == PacketType.SERVER_NOTIFY) {
             ServerNotifyPacket notifyPacket = (ServerNotifyPacket) packet;
             System.out.println("[SERVER] " + notifyPacket.getMessage()); //서버의 Notify 메세지 출력
@@ -87,10 +88,9 @@ public class ClientInputThread extends Thread {
                 clientOutputThread.setClientname(nameChangePacket.getChangename());
             }
             return true;
-        }
-        //파일은 미구현
-        else if(packetType == PacketType.SERVER_FILE){
-            //saveFile(serverbytedata);
+        } else if(packetType == PacketType.SERVER_FILE){
+            ServerFilePacket serverFilePacket = (ServerFilePacket) packet;
+            saveFile(serverFilePacket);
             return true;
         }
         return true;
@@ -108,25 +108,35 @@ public class ClientInputThread extends Thread {
             return byteToServerDisconnectPacket(bytedata);
         } else if(servertype == PacketType.SERVER_CHANGENAME){
             return byteToServerNameChangePacket(bytedata);
-        } else return null;
+        } else if(servertype == PacketType.SERVER_FILE){
+            return byteToServerFilePacket(bytedata);
+        }
+        else return null;
     }
 
-    public void saveFile(byte[] bodyBytes) throws IOException {
-        int nameLength = byteArrayToInt(bodyBytes, 8, 11);
-        String name = new String(bodyBytes, 12, nameLength); //인덱스 12부터 nameLength만큼 문자열로 변환
-        int filenamelength = byteArrayToInt(bodyBytes, 12 + nameLength, 15 + nameLength);
-        String filename = new String(bodyBytes, 16 + nameLength, filenamelength);
-        int filelength = byteArrayToInt(bodyBytes, 16 + nameLength + filenamelength, 19 + nameLength + filenamelength);
-
-
-        File receivedFile = new File("/Users/hyunchuljung/Desktop/ClientFolder/" + filename);
-        FileOutputStream fos = new FileOutputStream(receivedFile);
-        byte[] fileData = Arrays.copyOfRange(bodyBytes, 20 + nameLength + filenamelength, 20 + nameLength + filenamelength + filelength);
-
-        System.out.println("[SERVER] " + name + " send file : " + filename);
-
-        fos.write(fileData);
-        fos.close();
+    public void saveFile(ServerFilePacket packet) throws IOException {
+        try{
+            String filename = packet.getFileName();
+            int chunknumber = packet.getChunkNumber();
+            byte[] chunk = packet.getChunk();
+            if(!fileMap.containsKey(filename)){
+                File file = new File("/Users/hyunchuljung/Desktop/ClientFolder/" + filename);
+                RandomAccessFile rfile = new RandomAccessFile(file,"rw");
+                fileMap.put(filename,rfile);
+            }
+            RandomAccessFile rfile = fileMap.get(filename);
+            rfile.seek(chunknumber * 4096L);
+            rfile.write(chunk);
+        }catch (IOException e){
+            fileMap.remove(packet.getFileName());
+            e.printStackTrace();
+        }
+        if(packet.getChunkNumber() == packet.getLastChunkNumber()){
+            fileMap.remove(packet.getFileName());
+            System.out.println("File Download Complete");
+        } else if(packet.getChunkNumber() == 0){
+            System.out.println("File Download Start");
+        }
     }
 
 
